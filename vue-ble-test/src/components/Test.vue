@@ -1,13 +1,13 @@
 <template>
   <div class="test">
       <h1>{{title}}</h1>
-      <form>
+      <form v-on:submit="getDevices">
         <label for="allDevices">All Devices</label>
         <input type="checkbox" id="allDevices">
         <input id="service" type="text" size="17" list="services" placeholder="Bluetooth Service">
         <input id="name" type="text" size="17" placeholder="Device Name">
         <input id="namePrefix" type="text" size="17" placeholder="Name Prefix">
-        <button v-on:click="greet">Get Devices</button>
+        <input type="submit" value="Get Devices">
       </form>
       <datalist id="services">
         <option value="alert_notification">alert_notification</option>
@@ -76,45 +76,59 @@
           }
         },
         methods: {
-          greet: function() {
-            let filters = [];
+          getDevices: function(e) {
+            e.preventDefault();
 
-            let filterService = document.querySelector('#service').value;
-            if (filterService.startsWith('0x')) {
-              filterService = parseInt(filterService);
+            this.clearLog();
+
+            if (navigator.bluetooth) {
+              let filters = [];
+
+              let filterService = document.querySelector('#service').value;
+              if (filterService.startsWith('0x')) {
+                filterService = parseInt(filterService);
+              }
+              if (filterService) {
+                filters.push({services: [filterService]});
+              }
+
+              let filterName = document.querySelector('#name').value;
+              if (filterName) {
+                filter.push({name: filterName});
+              }
+
+              let filterNamePrefix = document.querySelector('#namePrefix').value;
+              if (filterNamePrefix) {
+                filters.push({namePrefix: filterNamePrefix});
+              }
+
+              let options = {};
+              if (document.querySelector('#allDevices').checked) {
+                options.acceptAllDevices = true;
+              } else {
+                options.filters = filters;
+              }
+
+              this.log('Requestiong Bluetooth Device...');
+              this.log('with ' + JSON.stringify(options));
+              navigator.bluetooth.requestDevice(options)
+              .then(device => {
+                log('-> Name:      ' + device.name);
+                log('-> ID:        ' + device.id);
+
+                return device.gatt.connect()
+              })
+              .then(server =>{
+                log('-> Connected: ' + device.gatt.connected);
+              })
+              .catch(error => {
+                log('Argh! ' + error);
+              });
             }
-            if (filterService) {
-              filters.push({services: [filterService]});
+            else {
+              alert('No Bluetooth');
             }
 
-            let filterName = document.querySelector('#name').value;
-            if (filterName) {
-              filter.push({name: filterName});
-            }
-
-            let filterNamePrefix = document.querySelector('#namePrefix').value;
-            if (filterNamePrefix) {
-              filters.push({namePrefix: filterNamePrefix});
-            }
-
-            let options = {};
-            if (document.querySelector('#allDevices').checked) {
-              options.acceptAllDevices = true;
-            } else {
-              options.filters = filters;
-            }
-
-            this.log('Requestiong Bluetooth Device...');
-            this.log('with ' + JSON.stringify(options));
-            navigator.bluetooth.requestDevice(options)
-            .then(device => {
-              log('-> Name:      ' + device.name);
-              log('-> ID:        ' + device.id);
-              log('-> Connected: ' + device.gatt.connected);
-            })
-            .catch(error => {
-              log('Argh! ' + error);
-            });
           },
           log: function () {
             var line = Array.prototype.slice.call(arguments).map(function(argument) {
@@ -127,7 +141,7 @@
             document.querySelector('#log').textContent = '';
           },
           setStatus: function(status) {
-            document.querySelector('#status').textContent = status;
+              document.querySelector('#status').textContent = status;
           },
           setContent: function () {
             var content = document.querySelector('#content');
