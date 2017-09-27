@@ -2,11 +2,8 @@
   <div class="test">
       <h1>{{title}}</h1>
       <form v-on:submit="getDevices">
-        <label for="allDevices">All Devices</label>
-        <input type="checkbox" id="allDevices">
         <input id="service" type="text" size="17" list="services" placeholder="Bluetooth Service">
-        <input id="name" type="text" size="17" placeholder="Device Name">
-        <input id="namePrefix" type="text" size="17" placeholder="Name Prefix">
+        <input id="characteristic" type="text" size="17" placeholder="Characteristic">
         <input type="submit" value="Get Devices">
       </form>
       <datalist id="services">
@@ -84,34 +81,22 @@
             if (navigator.bluetooth) {
               let filters = [];
 
-              let filterService = document.querySelector('#service').value;
-              if (filterService.startsWith('0x')) {
-                filterService = parseInt(filterService);
-              }
-              if (filterService) {
-                filters.push({services: [filterService]});
+              let serviceUuid = document.querySelector('#service').value;
+              if (serviceUuid.startsWith('0x')) {
+                serviceUuid = parseInt(serviceUuid);
               }
 
-              let filterName = document.querySelector('#name').value;
-              if (filterName) {
-                filter.push({name: filterName});
-              }
-
-              let filterNamePrefix = document.querySelector('#namePrefix').value;
-              if (filterNamePrefix) {
-                filters.push({namePrefix: filterNamePrefix});
-              }
-
-              let options = {};
-              if (document.querySelector('#allDevices').checked) {
-                options.acceptAllDevices = true;
-              } else {
-                options.filters = filters;
+              let characteristicUuid = document.querySelector('#characteristic').value;
+              if (characteristicUuid.startsWith('0x')) {
+                characteristicUuid = parseInt(characteristicUuid);
               }
 
               this.log('Requestiong Bluetooth Device...');
-              this.log('with ' + JSON.stringify(options));
-              navigator.bluetooth.requestDevice(options)
+              this.log('with Service: ' + filterService);
+              navigator.bluetooth.requestDevice({
+                acceptAllDevices: true,
+                optionalServices: [serviceUuid]
+              })
               .then(device => {
                 log('-> Name:      ' + device.name);
                 log('-> ID:        ' + device.id);
@@ -119,7 +104,17 @@
                 return device.gatt.connect()
               })
               .then(server =>{
-                log('-> Connected: ' + device.gatt.connected);
+                log('Getting Service');
+                return server.getPrimaryService(serviceUuid);
+              })
+              .then(service => {
+                log('Getting characteristic');
+                if (characteristicUuid) {
+                  return service.getCharacteristic(characteristicUuid);
+                }
+              })
+              .then(characteristics => {
+                log('>Characteristic: ' + characteristics.map(c => c.uuid).join('\n' + ''.repeat(19))));
               })
               .catch(error => {
                 log('Argh! ' + error);
