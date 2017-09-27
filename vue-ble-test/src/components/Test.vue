@@ -85,18 +85,17 @@
               if (serviceUuid.startsWith('0x')) {
                 serviceUuid = parseInt(serviceUuid);
               }
+              log('Service UUID: ' + serviceUuid);
 
               let characteristicUuid = document.querySelector('#characteristic').value;
               if (characteristicUuid.startsWith('0x')) {
                 characteristicUuid = parseInt(characteristicUuid);
               }
+              log('Characteristic UUID: ' characteristicUuid);
 
               this.log('Requestiong Bluetooth Device...');
               this.log('with Service: ' + filterService);
-              navigator.bluetooth.requestDevice({
-                acceptAllDevices: true,
-                optionalServices: [serviceUuid]
-              })
+              navigator.bluetooth.requestDevice({filters: [{services: [serviceUuid]}]})
               .then(device => {
                 log('-> Name:      ' + device.name);
                 log('-> ID:        ' + device.id);
@@ -114,7 +113,7 @@
                 }
               })
               .then(characteristics => {
-                log('>Characteristic: ' + characteristics.map(c => c.uuid).join('\n' + ''.repeat(19))));
+                log('>Characteristic: ' + characteristics.map(c => c.uuid).join('\n' + ''.repeat(19)));
               })
               .catch(error => {
                 log('Argh! ' + error);
