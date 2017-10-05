@@ -33,10 +33,10 @@
                   lastName: 'Tsilivis'
                 },
                 message: '',
-                version: '0.7'
+                version: '0.7.2'
             }
         },
-        mounted: function () {        
+        mounted: function () {
           if (!navigator.bluetooth) {
             this.setStatus('Web Bluetooth API is not available.\n');
           }
@@ -54,7 +54,7 @@
               let filters = [];
 
               // let serviceUuid = document.querySelector('#service').value;
-              let serviceUuid = "0x0FF"
+              let serviceUuid = "0x00FF"
               if (serviceUuid.startsWith('0x')) {
                 serviceUuid = parseInt(serviceUuid);
               }
@@ -101,6 +101,7 @@
               })
               .then(characteristic => {
                 let encoder = new TextEncoder('utf-8');
+                this.log("Encoded Message: " + encoder.encode(message));
                 return characteristic.writeValue(encoder.encode(message));
               })
               .then(_ => {
