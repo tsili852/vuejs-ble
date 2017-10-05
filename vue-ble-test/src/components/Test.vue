@@ -39,6 +39,7 @@
         mounted: function () {
           if (!navigator.bluetooth) {
             this.setStatus('Web Bluetooth API is not available.\n');
+            alert("Encoded Message: " + encoder.encode("Makis"));
           }
         },
         methods: {
